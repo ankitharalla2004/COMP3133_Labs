@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+       
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a5050, #299eab);
+            color: white;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        select {
+            padding: 10px;
+            font-size: 1.2rem;
+            border-radius: 25px;
+            border: none;
+            background-color: #fff;
+            color: #333;
+            margin-bottom: 20px;
+            width: 200px;
+            transition: 0.3s;
+        }
+
+        select:focus {
+            border-color: #2575fc;
+            outline: none;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            background-color: #2575fc;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #6a11cb;
+        }
+
+        #chatBox {
+            display: none;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        #messages {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        #message {
+            width: calc(100% - 100px);
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 25px;
+            border: 1px solid #ccc;
+            background: #f4f4f4;
+            margin-right: 10px;
+        }
+
+        button {
+            width: 80px;
+            padding: 12px;
+            font-size: 1rem;
+            background-color: #2575fc;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 600px) {
+            h2 {
+                font-size: 1.8rem;
+            }
+
+            select {
+                width: 100%;
+            }
+
+            #chatBox {
+                width: 100%;
+                padding: 15px;
+            }
+
+            #message {
+                width: calc(100% - 90px);
+            }
+
+            button {
+                width: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>Chat Room</h2>
+    <select id="room">
+        <option value="devops">DevOps</option>
+        <option value="cloud">Cloud Computing</option>
+        <option value="sports">Sports</option>
+    </select>
+    <button onclick="joinRoom()">Join</button>
+    
+    <div id="chatBox">
+        <div id="messages"></div>
+        <input type="text" id="message" placeholder="Type a message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        const socket = io("http://localhost:5000");
+        let currentRoom = "";
+        
+        function joinRoom() {
+            currentRoom = $("#room").val();
+            socket.emit("joinRoom", currentRoom);
+            $("#chatBox").show();
+        }
+
+        function sendMessage() {
+            const message = $("#message").val();
+            if (message.trim()) {
+                socket.emit("chatMessage", {
+                    from_user: localStorage.getItem("username"),
+                    room: currentRoom,
+                    message: message
+                });
+                $("#message").val("");
+            }
+        }
+
+        socket.on("message", (msg) => {
+            $("#messages").append(`<p><b>${msg.from_user}:</b> ${msg.message}</p>`);
+        });
+    </script>
+</body>
+</html>
